@@ -67,7 +67,18 @@ function endRequest(res, content)
 // Let's not launch the server if the module is required by something else
 if (require.main === module) {
   server.listen(PORT, HOST, () => {
-      console.log(`${Date.now()} ---> Pronote API HTTP Server working on ${HOST}:${PORT}`);
+        let dateLaunch = new Date(Date.now())
+        let jourLaunch = dateLaunch.getDate()
+        if(jourLaunch<10){
+            jourLaunch="0"+jourLaunch.toString()
+        }
+        let moisLaunch = dateLaunch.getMonth()+1
+        if(moisLaunch<10){
+            moisLaunch="0"+moisLaunch.toString()
+        }
+        let heureLaunch = dateLaunch.getHours()
+        let minLaunch = dateLaunch.getMinutes()
+        console.log(`[${jourLaunch}/${moisLaunch} - ${heureLaunch}:${minLaunch}] ---> Pronote API HTTP Server working on ${HOST}:${PORT}`);
   });
 }
 else module.exports = require('./src/pronote');
