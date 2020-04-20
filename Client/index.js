@@ -4,6 +4,20 @@ const fs = require('fs')
 const webhook = require('./webhook.json')
 const hook = new hookcord.Hook();
 let cache;
+let time = 60000;
+let init = false;
+let dateLaunch = new Date(Date.now())
+let jourLaunch = dateLaunch.getDate()
+if(jourLaunch<10){
+    jourLaunch="0"+jourLaunch.toString()
+}
+let moisLaunch = dateLaunch.getMonth()+1
+if(moisLaunch<10){
+    moisLaunch="0"+moisLaunch.toString()
+}
+let heureLaunch = dateLaunch.getHours()
+let minLaunch = dateLaunch.getMinutes()
+console.log("Starting...")
 
 function sendMessage(date,titre,prof,content,files) {
     hook.login(webhook.id, webhook.token)
@@ -97,44 +111,63 @@ setInterval(() => {
             console.log(error)
         }
         if(body){
+            if(init == false){
+                console.log(`[${jourLaunch}/${moisLaunch} - ${heureLaunch}:${minLaunch}] ---> Pronote API HTTP Client Listening on 127.0.0.1:21727`)
+                init=true;
+            }
             let l = nbMessages-1;
+            
             let intervalleDevoirs = setInterval(() => {
                 if(body["homeworks"]){
-                    let dateDebut = new Date(body["homeworks"][l]['since']+7200000)
-                    let dateFin = new Date(body["homeworks"][l]['until']+7200000)
-                    let jourDebut = dateDebut.getDate()
-                    let jourFin = dateFin.getDate()
-                    if(jourDebut<10){
-                        jourDebut="0"+jourDebut.toString()
-                    }
-                    if(jourFin<10){
-                        jourFin="0"+jourFin.toString()
-                    }
-                    let mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-                    dateDebut = jourDebut + " " + mois[dateDebut.getMonth()]
-                    dateFin = jourFin+" "+mois[dateFin.getMonth()]
-                    let matiere = body["homeworks"][l]["subject"]
-                    let message = "";
-                    if(body['homeworks'][l]['content']){
-                        message = body["homeworks"][l]["content"].replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, '').trim()
-                    } else {
-                        message = ""
-                    }
-                    let files = "";
-                    if(body['homeworks'][l]['files']){
-                        for(let j = 0; j < body['homeworks'][l]['files'].length; j++){
-                            files += body['homeworks'][l]['files'][j]['url']+"\n"
+                    if(body["homeworks"][l]){
+                        let dateDebut, dateFin, jourDebut, jourFin;
+                        let matiere;
+                        let message, files = "";
+                        let id;
+                        let mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+                        if(body["homeworks"][l]['since']){
+                            dateDebut = new Date(body["homeworks"][l]['since']+7200000)
+                            jourDebut = dateDebut.getDate();
+                            if(jourDebut<10){
+                                jourDebut="0"+jourDebut.toString()
+                            }
+                            dateDebut = jourDebut + " " + mois[dateDebut.getMonth()]
                         }
-                    } else {
-                        files = "";
-                    }
-                    let id = Buffer.from(matiere).toString('base64') + Buffer.from((body["homeworks"][l]['since']+7200000).toString()).toString('base64')
-                    if(!cache["lastHomeworks"].includes(id)){
-                        if(cache["lastHomeworks"].length>=nbMessages){
-                            cache["lastHomeworks"].shift();
+                        if(body["homeworks"][l]['until']){
+                            dateFin = new Date(body["homeworks"][l]['until']+7200000)
+                            jourFin = dateFin.getDate();
+                            if(jourFin<10){
+                                jourFin="0"+jourFin.toString()
+                            }
+                            dateFin = jourFin+" "+mois[dateFin.getMonth()]
                         }
-                        sendHomeworks(dateDebut,dateFin,matiere,message,files)
-                        cache["lastHomeworks"].push(id)
+                        if(body["homeworks"][l]["subject"]){
+                            matiere = body["homeworks"][l]["subject"]
+                        }
+                        if(body['homeworks'][l]['content']){
+                            message = body["homeworks"][l]["content"].replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, '').trim()
+                        } else {
+                            message = ""
+                        }
+                        if(body['homeworks'][l]['files']){
+                            for(let j = 0; j < body['homeworks'][l]['files'].length; j++){
+                                files += body['homeworks'][l]['files'][j]['url']+"\n"
+                            }
+                        } else {
+                            files = "";
+                        }
+                        if(matiere && message){
+                            id = Buffer.from(matiere).toString('base64') + Buffer.from(message).toString('base64')
+                        }
+                        if(id){
+                            if(!cache["lastHomeworks"].includes(id)){
+                                if(cache["lastHomeworks"].length>=nbMessages){
+                                    cache["lastHomeworks"].shift();
+                                }
+                                sendHomeworks(dateDebut,dateFin,matiere,message,files)
+                                cache["lastHomeworks"].push(id)
+                            }
+                        }
                     }
                 }
                 l--;
@@ -145,11 +178,12 @@ setInterval(() => {
             
             let i = nbMessages-1;
             let intervalleMessages = setInterval(() => {
-                if(body["infos"]){
+                if(body["infos"] && body["infos"][i]){
                     let messageUnix = body["infos"][i]['time']
                     let dateObj = new Date(messageUnix*1000);
                     let date = dateObj.toUTCString();
                     let titre;
+                    let id;
                     if(body['infos'][i]['title']){
                         titre = body['infos'][i]['title'];
                     } else {
@@ -170,13 +204,17 @@ setInterval(() => {
                     } else {
                         content=""
                     }
-                    let id = Buffer.from(prof).toString('base64') + Buffer.from(messageUnix.toString()).toString('base64')
-                    if(!cache["lastMessages"].includes(id)){
-                        if(cache["lastMessages"].length>=nbMessages){
-                            cache["lastMessages"].shift();
+                    if(prof && content){
+                        id = Buffer.from(prof).toString('base64') + Buffer.from(content).toString('base64')
+                    }
+                    if(id){
+                        if(!cache["lastMessages"].includes(id)){
+                            if(cache["lastMessages"].length>=nbMessages){
+                                cache["lastMessages"].shift();
+                            }
+                            sendMessage(date,titre,prof,content,files)
+                            cache["lastMessages"].push(id)
                         }
-                        sendMessage(date,titre,prof,content,files)
-                        cache["lastMessages"].push(id)
                     }
                 }
                 i--;
@@ -190,4 +228,4 @@ setInterval(() => {
     fs.writeFile('./cache.json', json, function (err) {
         if (err) throw err;
     })
-}, 60000);
+}, time);
