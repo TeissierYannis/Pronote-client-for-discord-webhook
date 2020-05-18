@@ -58,7 +58,7 @@ node ./Client/index.js
 ### Authors <a id="author"></a>
 
 * **YeyPiz** - *Initial work* - [read more](https://github.com/TeissierYannis)
-* **Theo-dev** - *Initial work* - [read more](https://github.com/theo-dev)
+* **Theo-code** - *Initial work* - [read more](https://github.com/theo-code)
 
 ### Thanks to <a id="thanks"></a>
 
