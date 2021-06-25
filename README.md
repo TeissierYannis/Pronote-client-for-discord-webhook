@@ -14,7 +14,7 @@ This script was created to send webhooks when pronote messages and homeworks are
 
 ### Installation Guide <a id="install"></a>
 
-- **Step 1 ** __Configure credential :__  ./Client/credentials.json
+- **Step 1** __Configure credential :__  ./Client/credentials.json
 ```json
 {
     "type": "fetch",
