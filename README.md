@@ -3,7 +3,7 @@
 [![Node](https://img.shields.io/badge/Node-v12.14.1-green.svg)](https://nodejs.org/fr/)
 [![pronote-api](https://img.shields.io/badge/pronote--api-by%20Litarvan-blue.svg)](https://github.com/Litarvan/pronote-api)
 
-This script was created to send webhooks when pronote messages and homeworks are sended.
+This script was created to send webhooks when pronote messages and homeworks are sent.
 
 ## Summary
 
